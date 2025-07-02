@@ -5,15 +5,20 @@ import { motion, useScroll, useTransform } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Zap, Shield, Users, TrendingUp, Coins, Timer, Gamepad2, Wallet, Menu, X, ArrowRight } from "lucide-react"
+import { Zap, Shield, Users, Coins, Gamepad2, Wallet, Menu, X, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { containerVariants, itemVariants } from "./components/data"
+import { WalletDisconnectButton, WalletMultiButton } from "@solana/wallet-adapter-react-ui"
+import { useConnection, useWallet } from "@solana/wallet-adapter-react"
 
 export default function GorbaganaCoinFlip() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [glitchText, setGlitchText] = useState("GORBAGANA")
   const { scrollYProgress } = useScroll()
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"])
+  const { connection } = useConnection();
+  const { publicKey } = useWallet();
+
 
   useEffect(() => {
     const glitchChars = "!@#$%^&*()_+-=[]{}|;:,.<>?"
@@ -75,10 +80,14 @@ export default function GorbaganaCoinFlip() {
                 Stats
               </Link>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button className="bg-green-400 hover:bg-green-500 text-black font-semibold transition-colors duration-300">
-                  <Wallet className="w-4 h-4 mr-2" />
-                  Connect Wallet
-                </Button>
+                {connection && !publicKey ?
+                  <WalletMultiButton />
+                  :
+                  <div className="flex items-center space-x-2">
+                    <WalletMultiButton />
+                    <WalletDisconnectButton className="bg-green-400 hover:bg-green-500 text-black font-semibold transition-colors duration-300" />
+                  </div>
+                }
               </motion.div>
             </nav>
 

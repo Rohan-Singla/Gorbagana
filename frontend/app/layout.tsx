@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "../styles/globals.css";
+import { SolanaWalletProvider } from "@/components/providers/walletProvider";
 
 const geistSans = Poppins({
   subsets: ["latin"],
@@ -22,7 +23,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.className} antialiased`}
       >
-        {children}
+        <SolanaWalletProvider>
+          {children}
+        </SolanaWalletProvider>
       </body>
     </html>
   );
