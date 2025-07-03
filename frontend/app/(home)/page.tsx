@@ -149,7 +149,7 @@ export default function GorbaganaCoinFlip() {
               {
                 icon: Shield,
                 title: "Provably Fair",
-                description: "Transparent, verifiable randomness. Every flip is cryptographically guaranteed fair.",
+                description: "Transparent, randomness. Every flip is cryptographically guaranteed fair.",
                 color: "text-white",
               },
               {
@@ -207,18 +207,18 @@ export default function GorbaganaCoinFlip() {
             {[
               {
                 step: "1",
-                title: "Connect & Bet",
-                description: "Connect your Solana wallet and choose your bet amount. Minimum 0.01 SOL.",
+                title: "Connect",
+                description: "Connect your Backpack wallet and click on start playing.",
               },
               {
                 step: "2",
-                title: "Call It",
-                description: "Heads or tails? Make your call and watch the coin flip in real-time.",
+                title: "Share the Invite Link",
+                description: "Join the game by sharing the invite link with your friend.",
               },
               {
                 step: "3",
-                title: "Win Big",
-                description: "Instant payouts to your wallet. Double your SOL or lose it all.",
+                title: "Reveal",
+                description: "Reveal your secret and wait for the game to end. and double your $GOR!",
               },
             ].map((item, index) => (
               <motion.div
@@ -249,16 +249,17 @@ export default function GorbaganaCoinFlip() {
               <span className="text-xl font-bold text-green-400">Gorbagana CoinFlip</span>
             </motion.div>
 
-            <div className="flex space-x-8 text-gray-500">
-              {["Terms", "Privacy", "Discord", "Twitter"].map((link) => (
-                <Link key={link} href="#" className="hover:text-green-400 transition-colors duration-300">
-                  {link}
-                </Link>
-              ))}
+            <div className="flex space-x-8 text-gray-400">
+              <Link href={"https://www.linkedin.com/in/rohan-singla100/"} target="_blank" className="hover:text-green-400 transition-colors duration-300">
+                LinkedIn
+              </Link>
+              <Link href={"https://x.com/rohanBuilds"} target="_blank" className="hover:text-green-400 transition-colors duration-300">
+                Twitter
+              </Link>
             </div>
           </div>
 
-          <div className="mt-8 pt-8 border-t border-gray-900 text-center text-gray-600">
+          <div className="mt-8 pt-8 border-t border-gray-900 text-center text-gray-400">
             <p>&copy; 2025 Gorbagana CoinFlip. Built on Gorbagana Devnet . Developed with ❤️ by <a href="https://github.com/Rohan-Singla" className="text-green-400 hover:text-green-500 transition-colors duration-300">Rohan Singla</a></p>
           </div>
         </div>

@@ -24,6 +24,7 @@ export default function GameLobby() {
     const [winner, setWinner] = useState<string | null>(null)
     const params = useSearchParams()
     const [joinId, setJoinId] = useState<string | null>(null)
+    const [reveals, setReveals] = useState<{ A: boolean; B: boolean }>({ A: false, B: false });
 
     useEffect(() => {
         const id = params.get("gameId")
@@ -101,7 +102,31 @@ export default function GameLobby() {
         if (publicKey) {
             setupGame()
         }
-    }, [publicKey])
+    }, [publicKey]);
+
+    useEffect(() => {
+        if (!gameId) return;
+
+        const interval = setInterval(async () => {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/game/status/${gameId}`);
+            const data = await res.json();
+
+            if (data.playerAReveal || data.playerBReveal) {
+                setReveals({
+                    A: Boolean(data.playerAReveal),
+                    B: Boolean(data.playerBReveal),
+                });
+            }
+
+            if (data.status === "done" && data.winner) {
+                setWinner(data.winner);
+                clearInterval(interval);
+            }
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [gameId]);
+
 
     const copyInviteLink = async () => {
         try {
@@ -145,14 +170,12 @@ export default function GameLobby() {
         <div className="min-h-screen bg-slate-950 text-white font-mono">
             <Navbar />
 
-            {/* Background Effects */}
             <div className="fixed inset-0 opacity-5">
                 <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-400 rounded-full blur-3xl animate-pulse" />
                 <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-400 rounded-full blur-3xl animate-pulse delay-1000" />
             </div>
 
             <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
-                {/* Progress Steps */}
                 <motion.div
                     className="mb-8"
                     initial={{ opacity: 0, y: 20 }}
@@ -173,8 +196,8 @@ export default function GameLobby() {
                                         >
                                             <div
                                                 className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${gameStep >= step.id
-                                                        ? "bg-cyan-400/20 border-cyan-400 shadow-lg shadow-cyan-400/20"
-                                                        : "bg-slate-800/50 border-slate-600"
+                                                    ? "bg-cyan-400/20 border-cyan-400 shadow-lg shadow-cyan-400/20"
+                                                    : "bg-slate-800/50 border-slate-600"
                                                     }`}
                                             >
                                                 <step.icon className="w-6 h-6" />
@@ -194,9 +217,7 @@ export default function GameLobby() {
                     </Card>
                 </motion.div>
 
-                {/* Main Content Grid */}
                 <div className="grid lg:grid-cols-3 gap-8 mb-8">
-                    {/* Game Status Card */}
                     <motion.div
                         className="lg:col-span-2"
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -205,7 +226,6 @@ export default function GameLobby() {
                     >
                         <Card className="bg-slate-900/60 border-slate-700/50 backdrop-blur-xl h-full">
                             <CardContent className="p-8 flex flex-col items-center justify-center text-center min-h-[500px]">
-                                {/* Animated Coin */}
                                 <motion.div
                                     className="w-32 h-32 mb-8 relative"
                                     animate={{ rotateY: 360 }}
@@ -221,13 +241,19 @@ export default function GameLobby() {
                                     />
                                 </motion.div>
 
-                                {/* Status Text */}
                                 <motion.h2
                                     className="text-3xl font-bold mb-4 text-cyan-400"
                                     animate={{ opacity: [0.8, 1, 0.8] }}
                                     transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
                                 >
-                                    {opponentJoined ? "Both Players Ready!" : "Waiting for Opponent..."}
+                                    {reveals.A && reveals.B
+                                        ? "Both players revealed!"
+                                        : reveals.A
+                                            ? "You revealed. Waiting for opponent..."
+                                            : reveals.B
+                                                ? "Opponent revealed. Waiting for you..."
+                                                : "Both players ready. Waiting to reveal..."}
+
                                 </motion.h2>
 
                                 <p className="text-slate-400 mb-8 max-w-lg text-lg leading-relaxed">
@@ -237,25 +263,25 @@ export default function GameLobby() {
                                 </p>
 
                                 {inviteLink && (
-                                <motion.div
-                                    className="bg-slate-800/60 rounded-xl p-6 border border-slate-600/50 w-full max-w-lg mb-6"
-                                    whileHover={{ borderColor: "#22d3ee", scale: 1.02 }}
-                                    transition={{ duration: 0.2 }}
-                                >
-                                    <div className="flex items-center justify-between gap-4">
-                                        <span className="text-cyan-400 font-mono text-sm truncate flex-1">{inviteLink}</span>
-                                        <motion.button
-                                            onClick={copyInviteLink}
-                                            className="p-3 rounded-lg bg-cyan-400/20 hover:bg-cyan-400/30 transition-all duration-200 border border-cyan-400/30"
-                                            whileHover={{ scale: 1.1 }}
-                                            whileTap={{ scale: 0.9 }}
-                                        >
-                                            {linkCopied ? (
-                                                <Check className="w-5 h-5 text-cyan-400" />
-                                            ) : (
-                                                <Copy className="w-5 h-5 text-cyan-400" />
-                                            )}
-                                        </motion.button>
+                                    <motion.div
+                                        className="bg-slate-800/60 rounded-xl p-6 border border-slate-600/50 w-full max-w-lg mb-6"
+                                        whileHover={{ borderColor: "#22d3ee", scale: 1.02 }}
+                                        transition={{ duration: 0.2 }}
+                                    >
+                                        <div className="flex items-center justify-between gap-4">
+                                            <span className="text-cyan-400 font-mono text-sm truncate flex-1">{inviteLink}</span>
+                                            <motion.button
+                                                onClick={copyInviteLink}
+                                                className="p-3 rounded-lg bg-cyan-400/20 hover:bg-cyan-400/30 transition-all duration-200 border border-cyan-400/30"
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                            >
+                                                {linkCopied ? (
+                                                    <Check className="w-5 h-5 text-cyan-400" />
+                                                ) : (
+                                                    <Copy className="w-5 h-5 text-cyan-400" />
+                                                )}
+                                            </motion.button>
                                         </div>
                                     </motion.div>
                                 )}
@@ -337,26 +363,12 @@ export default function GameLobby() {
                     </motion.div>
                 </div>
 
-                {/* Action Buttons */}
                 <motion.div
                     className="flex flex-col sm:flex-row gap-6 justify-center items-center"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.4 }}
                 >
-                    <motion.div whileHover={{ scale: canCancel ? 1.05 : 1 }} whileTap={{ scale: canCancel ? 0.95 : 1 }}>
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            disabled={!canCancel}
-                            className={`border-red-400/50 text-red-400 hover:bg-red-400/10 hover:border-red-400 px-8 py-4 text-lg font-medium transition-all duration-200 ${!canCancel ? "opacity-50 cursor-not-allowed" : ""
-                                }`}
-                        >
-                            <X className="w-5 h-5 mr-3" />
-                            Cancel Game
-                        </Button>
-                    </motion.div>
-
                     <AnimatePresence>
                         {showReveal && (
                             <motion.div
@@ -379,7 +391,6 @@ export default function GameLobby() {
                     </AnimatePresence>
                 </motion.div>
 
-                {/* Winner Display */}
                 <AnimatePresence>
                     {winner && (
                         <motion.div

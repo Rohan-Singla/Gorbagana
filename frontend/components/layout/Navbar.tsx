@@ -31,15 +31,6 @@ const Navbar = () => {
                     </motion.div>
 
                     <nav className="hidden md:flex items-center space-x-8">
-                        <Link href="#features" className="text-gray-400 hover:text-green-400 transition-colors duration-300">
-                            Features
-                        </Link>
-                        <Link href="#how-it-works" className="text-gray-400 hover:text-green-400 transition-colors duration-300">
-                            How It Works
-                        </Link>
-                        <Link href="#stats" className="text-gray-400 hover:text-green-400 transition-colors duration-300">
-                            Stats
-                        </Link>
                         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                             {connection && !publicKey ?
                                 <WalletMultiButton />
@@ -65,18 +56,6 @@ const Navbar = () => {
                         exit={{ opacity: 0, height: 0 }}
                     >
                         <div className="flex flex-col space-y-4 pt-6">
-                            <Link href="#features" className="text-gray-400 hover:text-green-400 transition-colors duration-300">
-                                Features
-                            </Link>
-                            <Link
-                                href="#how-it-works"
-                                className="text-gray-400 hover:text-green-400 transition-colors duration-300"
-                            >
-                                How It Works
-                            </Link>
-                            <Link href="#stats" className="text-gray-400 hover:text-green-400 transition-colors duration-300">
-                                Stats
-                            </Link>
                             {connection && !publicKey ?
                                 <WalletMultiButton />
                                 :

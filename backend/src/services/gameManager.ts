@@ -100,16 +100,16 @@ export async function revealSecret(req: Request, res: Response) {
                     return res.status(500).json({ error: "Failed to save winner" });
                 }
 
-                if (winner && updatedGame.pot) {
-                    try {
-                        console.log("💰 Initiating payout...");
-                        await transferGorToken(winner, updatedGame.pot);
-                        console.log("✅ Payout transfer completed.");
-                    } catch (payoutErr) {
-                        console.error("❌ Failed during token transfer:", payoutErr);
-                        return res.status(500).json({ error: "Token transfer failed" });
-                    }
-                }
+                // if (winner && updatedGame.pot) {
+                //     try {
+                //         console.log("💰 Initiating payout...");
+                //         await transferGorToken(winner, updatedGame.pot);
+                //         console.log("✅ Payout transfer completed.");
+                //     } catch (payoutErr) {
+                //         console.error("❌ Failed during token transfer:", payoutErr);
+                //         return res.status(500).json({ error: "Token transfer failed" });
+                //     }
+                // }
 
                 return res.json({ winner, message: 'Game complete and payout sent' });
             } catch (e) {
@@ -133,4 +133,5 @@ export async function getGameStatus(req: Request, res: Response) {
     if (!game) return res.status(404).json({ error: 'Game not found' })
     res.json(game)
 }
+
 
