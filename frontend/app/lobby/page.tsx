@@ -23,28 +23,31 @@ export default function GameLobby() {
     const [inviteLink, setInviteLink] = useState<string>("")
     const [winner, setWinner] = useState<string | null>(null)
     const params = useSearchParams()
-    const joinId = params.get("gameId");
+    const [joinId, setJoinId] = useState<string | null>(null);
+
+    useEffect(() => {
+        const id = params.get("gameId");
+        setJoinId(id);
+    }, [params]);
 
     useEffect(() => {
         const setupGame = async () => {
             if (connection && !publicKey) {
                 alert("Please connect your wallet to create a game");
-                return
+                return;
             }
 
             const secret = crypto.randomUUID();
-            const saltBytes = crypto.getRandomValues(new Uint8Array(16));
-            const salt = Array.from(saltBytes).map(b => b.toString(16).padStart(2, '0')).join('');
-
+            const salt = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
             const commitment = await sha256(secret + salt);
 
             sessionStorage.setItem("secret", secret);
             sessionStorage.setItem("salt", salt);
             sessionStorage.setItem("commitment", commitment);
 
-
             if (joinId) {
-
                 console.log("Joining Game Payload", joinId, publicKey?.toBase58(), commitment);
 
                 const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/game/join`, {
@@ -55,47 +58,56 @@ export default function GameLobby() {
                         address: publicKey?.toBase58(),
                         commitment
                     })
-                })
+                });
 
-                const data = await res.json()
-
+                const data = await res.json();
                 console.log("Joining Game Response", data);
 
-                setGameId(data.id)
-            } else {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/game/create`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        address: publicKey?.toBase58(),
-                        commitment
-                    })
-                })
-                const data = await res.json()
-                setGameId(data.id)
-                setInviteLink(`http://localhost:3000/lobby?gameId=${data.id}`)
+                setGameId(data.id);
+                setOpponentJoined(true);
+                setGameStep(2);
+                setShowReveal(true);
+                setCanCancel(false);
+                return; // ✅ Avoid falling through to create logic
             }
 
+            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/game/create`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    address: publicKey?.toBase58(),
+                    commitment
+                })
+            });
+
+            const data = await res.json();
+            console.log("Game Creation Response", data);
+
+            setGameId(data.id);
+            setInviteLink(`http://localhost:3000/lobby?gameId=${data.id}`);
+
             const interval = setInterval(async () => {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/game/status/${joinId || gameId}`)
-                const game = await res.json()
+                const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/game/status/${data.id}`);
+                const game = await res.json();
                 if (game.status === "ready") {
-                    setOpponentJoined(true)
-                    setGameStep(2)
-                    setShowReveal(true)
-                    setCanCancel(false)
+                    setOpponentJoined(true);
+                    setGameStep(2);
+                    setShowReveal(true);
+                    setCanCancel(false);
+                    clearInterval(interval);
                 }
-                if (game.status === "complete" && game.winner) {
-                    setWinner(game.winner)
-                    clearInterval(interval)
+                if (game.status === "done" || game.status === "complete") {
+                    setWinner(game.winner);
+                    clearInterval(interval);
                 }
-            }, 3000)
-        }
+            }, 3000);
+        };
 
         if (publicKey) {
-            setupGame()
+            setupGame();
         }
-    }, [publicKey])
+    }, [publicKey]);
+
 
     const copyInviteLink = async () => {
         try {
@@ -353,6 +365,20 @@ export default function GameLobby() {
 
                             </motion.div>
                         )}
+                        {winner && (
+                            <motion.div
+                                className="mt-6 text-center text-2xl font-bold text-lime-400"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.5 }}
+                            >
+                                🎉 Winner:{" "}
+                                <span className="text-pink-400">
+                                    {winner === publicKey?.toBase58() ? "You!" : `${winner.slice(0, 4)}...${winner.slice(-4)}`}
+                                </span>
+                            </motion.div>
+                        )}
+
                     </AnimatePresence>
                 </motion.div>
             </div>

@@ -44,7 +44,7 @@ export async function joinGame(req: Request, res: Response) {
 export async function revealSecret(req: Request, res: Response) {
     const { id, address, reveal } = req.body
     const game = await prisma.game.findUnique({ where: { id } })
-    if (!game || game.status === 'done') return res.status(404).json({ error: 'Game not found' })
+    if (!game) return res.status(404).json({ error: 'Game not found' })
 
     const hash = sha256(reveal)
     let updateData = {}
@@ -66,27 +66,65 @@ export async function revealSecret(req: Request, res: Response) {
 
     await prisma.game.update({ where: { id }, data: updateData })
 
-    // Re-fetch to check both reveals
     const updatedGame = await prisma.game.findUnique({ where: { id } })
-    if (updatedGame?.playerAReveal && updatedGame.playerBReveal) {
-        const result = parseInt(
-            xorHex(sha256(updatedGame.playerAReveal), sha256(updatedGame.playerBReveal)).slice(0, 2),
-            16
-        ) % 2
-        const winner = result === 0 ? updatedGame.playerAAddress : updatedGame.playerBAddress
+    try {
+        if (updatedGame?.playerAReveal && updatedGame.playerBReveal) {
+            const hashA = sha256(updatedGame.playerAReveal)
+            const hashB = sha256(updatedGame.playerBReveal)
 
-        await prisma.game.update({
-            where: { id },
-            data: { status: 'done', winner }
-        })
+            console.log("✅ Both players revealed. Proceeding to resolve winner...");
+            console.log("🔹 playerAReveal:", updatedGame.playerAReveal);
+            console.log("🔹 playerBReveal:", updatedGame.playerBReveal);
+            console.log("🔸 hashA:", hashA);
+            console.log("🔸 hashB:", hashB);
 
-        if (winner && updatedGame.pot) {
-            await transferGorToken(winner, updatedGame.pot)
+            try {
+                const xor = xorHex(hashA, hashB);
+                console.log("🧮 XOR result:", xor);
+
+                const resultByte = xor.slice(0, 2);
+                const result = parseInt(resultByte, 16) % 2;
+                console.log("🎲 Result Byte:", resultByte, "-> Coin Flip Result:", result);
+
+                const winner = result === 0 ? updatedGame.playerAAddress : updatedGame.playerBAddress;
+                console.log("🏆 Winner:", winner);
+
+                try {
+                    await prisma.game.update({
+                        where: { id },
+                        data: { status: 'done', winner }
+                    });
+                    console.log("✅ Game updated in DB with winner.");
+                } catch (dbErr) {
+                    console.error("❌ Failed to update game status/winner:", dbErr);
+                    return res.status(500).json({ error: "Failed to save winner" });
+                }
+
+                if (winner && updatedGame.pot) {
+                    try {
+                        console.log("💰 Initiating payout...");
+                        await transferGorToken(winner, updatedGame.pot);
+                        console.log("✅ Payout transfer completed.");
+                    } catch (payoutErr) {
+                        console.error("❌ Failed during token transfer:", payoutErr);
+                        return res.status(500).json({ error: "Token transfer failed" });
+                    }
+                }
+
+                return res.json({ winner, message: 'Game complete and payout sent' });
+            } catch (e) {
+                console.error("❌ Error during XOR/winner logic:", e);
+                return res.status(500).json({ error: 'Internal Server Error during winner resolution' });
+            }
         }
-        return res.json({ winner, message: 'Game complete and payout sent' })
+
+        console.log("🕵️ Only one player has revealed. Waiting for the other...");
+        return res.json({ message: `Reveal accepted for player ${player}` });
+    } catch (error) {
+        console.error("❌ Top-level error finalizing game:", error);
+        return res.status(500).json({ error: "Internal Server Error during winner resolution" });
     }
 
-    return res.json({ message: `Reveal accepted for player ${player}` })
 }
 
 
