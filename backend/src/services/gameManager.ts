@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { sha256, xorHex } from '../utils/crypto'
 import { transferGorToken } from './solana'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '../generated/prisma';
 
 const prisma = new PrismaClient();
 
@@ -80,7 +80,9 @@ export async function revealSecret(req: Request, res: Response) {
             data: { status: 'done', winner }
         })
 
-        await transferGorToken(winner, updatedGame.pot)
+        if (winner && updatedGame.pot) {
+            await transferGorToken(winner, updatedGame.pot)
+        }
         return res.json({ winner, message: 'Game complete and payout sent' })
     }
 

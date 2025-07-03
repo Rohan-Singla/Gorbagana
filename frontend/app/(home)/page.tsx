@@ -1,24 +1,23 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion, useScroll, useTransform } from "framer-motion"
+import { motion, useScroll, useTransform, Variants } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Zap, Shield, Users, Coins, Gamepad2, Wallet, Menu, X, ArrowRight } from "lucide-react"
+import { Zap, Shield, Users, Coins, Gamepad2, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { containerVariants, itemVariants } from "./components/data"
-import { WalletDisconnectButton, WalletMultiButton } from "@solana/wallet-adapter-react-ui"
-import { useConnection, useWallet } from "@solana/wallet-adapter-react"
+import { useGameSetup } from "@/hooks/useGameSetup"
+import { useRouter } from "next/navigation"
+import Navbar from "@/components/layout/Navbar"
 
 export default function GorbaganaCoinFlip() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [glitchText, setGlitchText] = useState("GORBAGANA")
   const { scrollYProgress } = useScroll()
   const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"])
-  const { connection } = useConnection();
-  const { publicKey } = useWallet();
-
+  const { generateCommitment } = useGameSetup()
+  const router = useRouter();
 
   useEffect(() => {
     const glitchChars = "!@#$%^&*()_+-=[]{}|;:,.<>?"
@@ -50,81 +49,7 @@ export default function GorbaganaCoinFlip() {
         <div className="absolute bottom-20 right-20 w-2 h-2 bg-green-400 rounded-full" />
       </motion.div>
 
-      <motion.header
-        className="relative z-50 border-b border-gray-900"
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-      >
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <motion.div
-              className="flex items-center space-x-3"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <div className="w-8 h-8 bg-green-400 rounded-lg flex items-center justify-center">
-                <Coins className="w-5 h-5 text-black" />
-              </div>
-              <span className="text-xl font-bold text-green-400">Gorbagana</span>
-            </motion.div>
-
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link href="#features" className="text-gray-400 hover:text-green-400 transition-colors duration-300">
-                Features
-              </Link>
-              <Link href="#how-it-works" className="text-gray-400 hover:text-green-400 transition-colors duration-300">
-                How It Works
-              </Link>
-              <Link href="#stats" className="text-gray-400 hover:text-green-400 transition-colors duration-300">
-                Stats
-              </Link>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                {connection && !publicKey ?
-                  <WalletMultiButton />
-                  :
-                  <div className="flex items-center space-x-2">
-                    <WalletMultiButton />
-                    <WalletDisconnectButton className="bg-green-400 hover:bg-green-500 text-black font-semibold transition-colors duration-300" />
-                  </div>
-                }
-              </motion.div>
-            </nav>
-
-            <button className="md:hidden text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-
-          {isMenuOpen && (
-            <motion.nav
-              className="md:hidden mt-6 pb-6 border-t border-gray-900"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-            >
-              <div className="flex flex-col space-y-4 pt-6">
-                <Link href="#features" className="text-gray-400 hover:text-green-400 transition-colors duration-300">
-                  Features
-                </Link>
-                <Link
-                  href="#how-it-works"
-                  className="text-gray-400 hover:text-green-400 transition-colors duration-300"
-                >
-                  How It Works
-                </Link>
-                <Link href="#stats" className="text-gray-400 hover:text-green-400 transition-colors duration-300">
-                  Stats
-                </Link>
-                <Button className="bg-green-400 hover:bg-green-500 text-black font-semibold w-full">
-                  <Wallet className="w-4 h-4 mr-2" />
-                  Connect Wallet
-                </Button>
-              </div>
-            </motion.nav>
-          )}
-        </div>
-      </motion.header>
+      <Navbar />
 
       <section className="relative z-10 pt-32 pb-32">
         <div className="container mx-auto px-6">
@@ -134,21 +59,21 @@ export default function GorbaganaCoinFlip() {
             initial="hidden"
             animate="visible"
           >
-            <motion.div variants={itemVariants}>
+            <motion.div variants={itemVariants as Variants}>
               <Badge className="mb-8 bg-gray-900 text-green-400 border-green-400/20 px-4 py-2">
                 <Zap className="w-3 h-3 mr-2" />
                 Powered by Gorbagana Testnet
               </Badge>
             </motion.div>
 
-            <motion.h1 className="text-5xl md:text-7xl font-black mb-8 leading-none" variants={itemVariants}>
+            <motion.h1 className="text-5xl md:text-7xl font-black mb-8 leading-none" variants={itemVariants as Variants}>
               <span className="text-green-400 block">{glitchText}</span>
               <span className="text-white">COINFLIP</span>
             </motion.h1>
 
             <motion.p
               className="text-xl md:text-2xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed"
-              variants={itemVariants}
+              variants={itemVariants as Variants}
             >
               The fastest, fairest coinflip game on Solana.
               <br />
@@ -157,12 +82,18 @@ export default function GorbaganaCoinFlip() {
 
             <motion.div
               className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16"
-              variants={itemVariants}
+              variants={itemVariants as Variants}
             >
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
                   size="lg"
                   className="bg-green-400 hover:bg-green-500 text-black font-bold text-lg px-8 py-4 group"
+                  onClick={
+                    () => {
+                      generateCommitment();
+                      router.push("/lobby");
+                    }
+                  }
                 >
                   <Gamepad2 className="w-5 h-5 mr-2" />
                   Start Playing
@@ -180,34 +111,10 @@ export default function GorbaganaCoinFlip() {
               </motion.div>
             </motion.div>
 
-            {/* Live Stats */}
-            <motion.div
-              className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto"
-              variants={containerVariants}
-            >
-              {[
-                { value: "$2.4M", label: "Volume 24h", color: "text-green-400" },
-                { value: "1,247", label: "Active Players", color: "text-white" },
-                { value: "0.4s", label: "Avg Settlement", color: "text-white" },
-                { value: "99.1%", label: "Uptime", color: "text-green-400" },
-              ].map((stat, index) => (
-                <motion.div
-                  key={index}
-                  className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 backdrop-blur-sm"
-                  variants={itemVariants}
-                  whileHover={{ y: -5, borderColor: "#4ade80" }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
-                  <div className={`text-2xl font-bold ${stat.color} mb-1`}>{stat.value}</div>
-                  <div className="text-sm text-gray-500">{stat.label}</div>
-                </motion.div>
-              ))}
-            </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* Features Section */}
       <section id="features" className="relative z-10 py-32 bg-gray-950/50">
         <div className="container mx-auto px-6">
           <motion.div
@@ -254,7 +161,7 @@ export default function GorbaganaCoinFlip() {
             ].map((feature, index) => (
               <motion.div
                 key={index}
-                variants={itemVariants}
+                variants={itemVariants as Variants}
                 whileHover={{ y: -10 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
@@ -273,7 +180,6 @@ export default function GorbaganaCoinFlip() {
         </div>
       </section>
 
-      {/* How It Works */}
       <section id="how-it-works" className="relative z-10 py-32">
         <div className="container mx-auto px-6">
           <motion.div
@@ -318,7 +224,7 @@ export default function GorbaganaCoinFlip() {
               <motion.div
                 key={index}
                 className="text-center"
-                variants={itemVariants}
+                variants={itemVariants as Variants}
                 whileHover={{ scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
@@ -353,7 +259,7 @@ export default function GorbaganaCoinFlip() {
           </div>
 
           <div className="mt-8 pt-8 border-t border-gray-900 text-center text-gray-600">
-            <p>&copy; 2024 Gorbagana CoinFlip. Built on Solana. Play responsibly.</p>
+            <p>&copy; 2025 Gorbagana CoinFlip. Built on Gorbagana Devnet . Developed with ❤️ by <a href="https://github.com/Rohan-Singla" className="text-green-400 hover:text-green-500 transition-colors duration-300">Rohan Singla</a></p>
           </div>
         </div>
       </footer>
